@@ -1,0 +1,136 @@
+#+TITLE: Cross-compilation of NASM code with Win32 API functions for 32-bit Windows under GNU/Linux systems
+#+STARTUP: inlineimages
+
+(you can find full source at =src/hello.asm=, MIT license)
+
+** Introduction
+In this note we explore basic cross-compilation of assembler code (NASM) on Linux targeting Windows users (32-bit).
+We will build a simple Win32 application showing welcome message and persevere all the perils
+behind such a straightforward task...
+
+** Netwide Assembler (NASM)
+For this example we will use Netwide Assembler, but some parts still can be applicable even if
+you use other assembler. Check the [[www.nasm.us][official site]], whether it is available for your 
+GNU/Linux distribution and install it.
+
+** Win32 application
+Let's write a simple application using Win32 API functions:
+#+begin_src asm
+  section .data
+  Caption db "Я програма на асемблері", 0
+  Text db "Здоровеньки були!", 0
+
+  section .text
+  extern _MessageBoxA@16
+  extern _ExitProcess@4
+  
+  global _main
+_main:
+  push 0
+  push Caption
+  push Text
+  push 0
+  call _MessageBoxA@16
+  push 0
+  call _ExitProcess@4
+#+end_src
+
+Some things need clarifying. Firstly, =_main= label. It is the entry point for Windows application, contrary
+to =_start= in Linux. Without it, we encounter =undefined reference to `WinMain@16= error. Secondly,
+naming conventions of Win32 functions. As you can see, every function is prefixed with an /underscore/. In addition
+to that, every function is decorated with number (=@n=). This decorator specifies the total size of the function's arguments in bytes.
+For example, =ExitProcess= function accepts the argument of a type =UINT=, which has size of four bytes, hence =@4= decorator.
+To find out the total size of the function's arguments, we can use [[https://docs.microsoft.com/en-us/windows/win32/][Win32 documentation]].
+All of these manipulations are done because Win32 API uses =__stdcall= calling convention. Also for this reason we =push= arguments
+in stack from right to left. More on that in this [[https://stackoverflow.com/questions/18812529/nasm-symbol-at-function-declarations][stackoverflow answer]].
+We define =MessageBox= and =ExitProcess= as extern values, because we link to them with linker and compiler needs to know that,
+otherwise we get =symbol 'X' undefined= error. To spice things up we use cyrillic characters (ukrainian) in window caption and inner text. 
+It will prove its use later.
+
+** Compilation and linking
+Now let's cross-compile this piece. For this section we have to install =mingw-w64= cross-compiler (either gcc or clang wrapper).
+For Ubuntu, it goes like this:
+#+begin_src bash
+sudo apt-get install mingw-w64
+#+end_src
+
+Check your GNU/Linux distribution repository and install it using package manager.
+In this example we use =wclang=, which is a =clang= wrapper, designed to eliminate long libraries and headers inclusions in
+compilation command. You can find it [[https://github.com/tpoechtrager/wclang][here]]. Also check your repository before compiling it by hand (available in [[https://aur.archlinux.org/packages/mingw-w64-clang-git/][AUR]],
+for example).
+
+First, let's compile it with =nasm=:
+#+begin_src bash
+nasm -f win32 -o hello.obj hello.asm
+#+end_src 
+
+Next, we link it with =i686-w64-mingw32-clang=, provided by =wclang=:
+#+begin_src bash
+i686-w64-mingw32-clang -o hello.exe hello.obj -luser32 -lkernel32
+#+end_src
+
+(Note: if you haven't installed =wclang=, you can still use =i686-w64-mingw32-g++= with the same parameters)
+Just like in usual linking process, we specify libraries with =-l= flag. In this case, we link dynamic libraries =user32.dll= 
+and =kernel32.dll=, which provide =MessageBox= and =ExitProcess=, respectively.
+
+** Testing
+For testing we could use =wine=, but in this test native Windows 10 is used. Double-click on the executable...
+
+[[file:images/test1.png]]
+
+Something is definetly not right.
+
+** Fixing
+(Note: If you try to execute it under =wine=, you will get the same result)
+Obviously, something is wrong with encoding. But what exactly? Well, as it turns out, Windows makes use of CP1251 code page 
+(and many others, for more information refer to the [[https://en.wikipedia.org/wiki/Windows_code_page][Wikipedia page]]).
+And on Linux, text editors by default create UTF-8 encoded files. Our goal is to re-encode =.asm= file somehow.
+For that purpose, there is a standard utility called =iconv=:
+#+begin_src bash
+iconv -f UTF-8 -t CP1251 hello.asm -o hello.asm
+#+end_src
+
+Let's recompile our code again and see the results, this time in =wine=:
+#+begin_src bash
+nasm -f win32 -o hello.obj hello.asm
+i686-w64-mingw32-clang -o hello.exe hello.obj -luser32 -lkernel32
+LC_ALL=uk_UA.utf8 wine hello.exe
+#+end_src
+
+[[file:images/test2.png]]
+
+As we can see, everything is fine and dandy!
+
+** Alternate take on fixing
+We also have the other option. There are two variations of =MessageBox= function. First one, =MessageBoxA= takes as arguments
+ASCII strings. The second one is called =MessageBoxW=, its arguments are UTF-16 strings. In the third chapter of the NASM [[https://www.nasm.us/xdoc/2.10.09/html/nasmdoc3.html][manual]]
+we can find something interesting about Unicode strings:
+#+begin_src asm
+  %define u(x) __utf16__(x)
+#+end_src
+
+In this case we don't need to re-encode our file, we just add this macro (or use =__utf16__= operator directly) and apply it on the strings:
+#+begin_src asm
+  Caption dw u("Я програма на асемблері"), 0
+  Text dw u("Здоровеньки були!"), 0
+#+end_src
+
+We also change =db= to =dw= directives, since we are using  16-bit Unicode.
+And, of course, we need to change all =MessageBoxA= occurrences to =MessageBoxW=:
+#+begin_src asm
+  extern _MessageBoxW@16
+  extern _ExitProcess@4
+...
+...
+...
+  call _MessageBoxW@16
+  push 0
+  call _ExitProcess@4
+#+end_src
+
+Visible result is equal to the first try. Generally, we prefer this method over the other, because Unicode is dominant and
+passing the code to others may induce problems.
+
+** Conclusion
+In conclusion, i want to thank you for following these notes, and i am glad if you found them useful.
+Full source can be found at =src/hello.asm=. Special thanks to everyone in =THANKS.org= file.
