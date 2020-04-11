@@ -5,7 +5,7 @@ Brand: resd 13                        ; reserve for brand name
 
 
 section .data
-Caption: db "Результат CPUID", 0      ; window header placeholder
+Caption: db "CPUID Result", 0         ; window header placeholder
 VendorCap: db "Vendor ID", 0          ; for manufacturer string
 BrandCap: db "Brand", 0               ; processor brand string
   
