@@ -9,7 +9,7 @@ Caption: db "CPUID Result", 0         ; window header placeholder
 VendorCap: db "Vendor ID", 0          ; for manufacturer string
 BrandCap: db "Brand", 0               ; processor brand string
 
-        
+
 section .text
 extern _MessageBoxA@16
 extern _ExitProcess@4
@@ -18,7 +18,7 @@ global _main
 _main:
         mov eax, 0                    ; gather vendor string
         mov edi, Vendor               ; pointer to reserved space
-        cpuid                         
+        cpuid
         mov [edi], ebx                ; compose vendor string
         add edi, 4                    ; advance pointer by DWORD
         mov [edi], edx                ; -//-
@@ -30,16 +30,16 @@ _main:
         push Vendor                   ; -//-
         push 0                        ; -//-
         call _MessageBoxA@16          ; -//-
-        
-        
+
+
         mov ecx, 0                    ; counter, (0<=2) 3 loops, 3 calls
 .LowerCalls:
         push ecx                      ; save counter
-                
+
         push ecx                      ; call CPUID
         push Result                   ; -//-
         call CpuIdToStr               ; -//-
-        
+
         push 0                        ; call message box
         push Caption                  ; -//-
         push Result                   ; -//-
@@ -57,7 +57,7 @@ _main:
         push ecx                      ; call CPUID
         push Result                   ; -//-
         call CpuIdToStr               ; -//-
-        
+
         push 0                        ; show CPUID results
         push Caption                  ; -//-
         push Result                   ; -//-
@@ -68,12 +68,12 @@ _main:
         inc ecx                       ; increment counter
         cmp ecx, 0x80000008           ; check whether higher calls are finished
         jle .HigherCalls
-        
+
         mov eax, 0x80000002           ;   calls from 0x80000002 to 0x80000004 ->
         mov edi, Brand                ;-> return brand name, works in the same ->
-.GatherBrand:                         ;-> way as the code after '_main' label. 
-        push eax                      
-        push edi                     
+.GatherBrand:                         ;-> way as the code after '_main' label.
+        push eax
+        push edi
         cpuid
         pop edi
         mov [edi], eax
@@ -94,7 +94,7 @@ _main:
         push Brand                    ; -//-
         push 0                        ; -//-
         call _MessageBoxA@16          ; -//-
-        
+
         push 0                        ; exit programm
         call _ExitProcess@4           ; -//-
 
@@ -112,7 +112,7 @@ _main:
         ; Registers:
         ; This procedure changes state of EAX, ECX, EDI
         ;---------------------------------------------------------------
-        
+
 GenPlcHldStr:
         push ebp
         mov ebp, esp
@@ -130,7 +130,7 @@ GenPlcHldStr:
         dec ecx                       ; decrement digits counter
         cmp ecx, 0                    ; check whether loop is finished
         jge .digits                   ; jump, if isn't
-        
+
         mov word [edi], 0x0d0a        ; carriage return + line feed
         add edi, 2                    ; advance pointer
         add eax, 0x00000100           ; change middle letter
@@ -139,10 +139,10 @@ GenPlcHldStr:
         cmp ecx, 0                    ; check whether loop is finished
         jge .items                    ; jump, if isn't
         mov byte [edi], 0             ; null-termination
-        
+
         pop ebp                       ; restore base pointer from stack back
         ret 4                         ; return from procedure freeing 4 bytes (arguments length) from stack
-        
+
 
         ;---------------------------------------------------------------
         ; DwordToStrHex: converts 8 nybbles to 8 hexadecimal characters
@@ -183,21 +183,21 @@ DwordToStrHex:
         ret 8                         ; return from procedure freeing 8 bytes (arguments length) from stack
 
 
-;---------------------------------------------------------------
-; CpuIdToStr: invokes CPUID and returns string with EAX-EDX
-; contents
-;---------------------------------------------------------------
-; Input:
-; 1. (dword) - CPUID code
-; 2. (dword) - address, where results will be stored
-;
-; Output:
-; String in "REG=xxxxxxxx" format with each register on new
-; line (carriage return + line feed)
-;
-; Registers:
-; This procedure changes state of EAX, EBX, EDX, EDI
-;---------------------------------------------------------------
+        ;---------------------------------------------------------------
+        ; CpuIdToStr: invokes CPUID and returns string with EAX-EDX
+        ; contents
+        ;---------------------------------------------------------------
+        ; Input:
+        ; 1. (dword) - CPUID code
+        ; 2. (dword) - address, where results will be stored
+        ;
+        ; Output:
+        ; String in "REG=xxxxxxxx" format with each register on new
+        ; line (carriage return + line feed)
+        ;
+        ; Registers:
+        ; This procedure changes state of EAX, EBX, EDX, EDI
+        ;---------------------------------------------------------------
 
 CpuIdToStr:
         push ebp                      ; push in the stack address in base pointer
