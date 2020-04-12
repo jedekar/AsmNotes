@@ -8,7 +8,8 @@ section .data
 Caption: db "CPUID Result", 0         ; window header placeholder
 VendorCap: db "Vendor ID", 0          ; for manufacturer string
 BrandCap: db "Brand", 0               ; processor brand string
-  
+
+        
 section .text
 extern _MessageBoxA@16
 extern _ExitProcess@4
@@ -94,8 +95,8 @@ _main:
         push 0                        ; -//-
         call _MessageBoxA@16          ; -//-
         
-        push 0
-        call _ExitProcess@4
+        push 0                        ; exit programm
+        call _ExitProcess@4           ; -//-
 
 
         ;---------------------------------------------------------------
@@ -106,10 +107,10 @@ _main:
         ;
         ; Output:
         ; Placeholder string in "REG=xxxxxxxx" format with new line
-        ; (carriage return + line feed) after each register
+        ; (carriage return + line feed) after each item
         ;
         ; Registers:
-        ; This procedure changes state of EAX, ECX, EDI, EBP, ESP
+        ; This procedure changes state of EAX, ECX, EDI
         ;---------------------------------------------------------------
         
 GenPlcHldStr:
@@ -154,7 +155,7 @@ GenPlcHldStr:
         ; Four ASCII characters string, representing hexadecimal number
         ;
         ; Registers:
-        ; This procedure changes state of EAX, EBX, EDX, EDI, EBP, ESP
+        ; This procedure changes state of EAX, EBX, EDX, EDI
         ;---------------------------------------------------------------
 
 DwordToStrHex:
@@ -182,21 +183,21 @@ DwordToStrHex:
         ret 8                         ; return from procedure freeing 8 bytes (arguments length) from stack
 
 
-        ;---------------------------------------------------------------
-        ; CpuIdToStr: invokes CPUID and returns string with EAX-EDX
-        ; contents
-        ;---------------------------------------------------------------
-        ; Input:
-        ; 1. (dword) - CPUID code
-        ; 2. (dword) - address, where results will be stored
-        ;
-        ; Output:
-        ; String in "REG=xxxxxxxx" format with each register on new
-        ; line (carriage return + line feed)
-        ;
-        ; Registers:
-        ; This procedure changes state of EAX, EBX, EDX, EDI, EBP, ESP
-        ;---------------------------------------------------------------
+;---------------------------------------------------------------
+; CpuIdToStr: invokes CPUID and returns string with EAX-EDX
+; contents
+;---------------------------------------------------------------
+; Input:
+; 1. (dword) - CPUID code
+; 2. (dword) - address, where results will be stored
+;
+; Output:
+; String in "REG=xxxxxxxx" format with each register on new
+; line (carriage return + line feed)
+;
+; Registers:
+; This procedure changes state of EAX, EBX, EDX, EDI
+;---------------------------------------------------------------
 
 CpuIdToStr:
         push ebp                      ; push in the stack address in base pointer
