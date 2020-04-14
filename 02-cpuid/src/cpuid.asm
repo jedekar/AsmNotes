@@ -49,7 +49,7 @@ _main:
         pop ecx                       ; retrieve counter
         inc ecx                       ; increment counter
         cmp ecx, 2                    ; check whether lower calls are finished
-        jle .LowerCalls               ; jump, if aren't
+        jle .LowerCalls               ; jump, if not
         mov ecx, 0x80000000           ; counter, (0<=5) 6 loops, 6 calls
 .HigherCalls:
         push ecx
@@ -129,7 +129,7 @@ GenPlcHldStr:
         add edi, 1                    ; advance pointer
         dec ecx                       ; decrement digits counter
         cmp ecx, 0                    ; check whether loop is finished
-        jge .digits                   ; jump, if isn't
+        jge .digits                   ; jump, if not
 
         mov word [edi], 0x0d0a        ; carriage return + line feed
         add edi, 2                    ; advance pointer
@@ -176,8 +176,8 @@ DwordToStrHex:
         mov [edi + ecx], al           ; write converted number (flow from right to left)
         shr ebx, 4                    ; shift next nybble into lower position
         dec ecx                       ; decrement counter
-        cmp ecx, 0                    ; compare with zero
-        jge .next                     ; if it is greater than or equals to zero, continue conversion
+        cmp ecx, 0                    ; check whether it is zero
+        jge .next                     ; -//-
 
         pop ebp                       ; restore base pointer from stack back
         ret 8                         ; return from procedure freeing 8 bytes (arguments length) from stack
@@ -226,7 +226,7 @@ CpuIdToStr:
         add edi, 14                   ; add name + value + \n\r in bytes offset
         inc ecx                       ; increment counter
         cmp ecx, 5                    ; check whether loop is finished
-        jle .next                     ; jump, if isn't
+        jle .next                     ; jump, if not
 
         pop eax                       ; clear stack from CPUID results
         pop ebx                       ; -//-
