@@ -39,7 +39,7 @@ ToDigitHex:
         ; after each octet
         ;
         ; Registers:
-        ; EAX, EBX, ECX, EDX, ESI, EDI
+        ; EAX, ECX, EDX, ESI, EDI
         ;---------------------------------------------------------------
         
 ToStrBin:
