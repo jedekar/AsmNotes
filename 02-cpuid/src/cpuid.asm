@@ -110,7 +110,7 @@ _main:
         ; (carriage return + line feed) after each item
         ;
         ; Registers:
-        ; This procedure changes state of EAX, ECX, EDI
+        ; EAX, ECX, EDI
         ;---------------------------------------------------------------
 
 GenPlcHldStr:
@@ -155,7 +155,7 @@ GenPlcHldStr:
         ; Four ASCII characters string, representing hexadecimal number
         ;
         ; Registers:
-        ; This procedure changes state of EAX, EBX, EDX, EDI
+        ; EAX, EBX, EDX, EDI
         ;---------------------------------------------------------------
 
 DwordToStrHex:
@@ -167,10 +167,10 @@ DwordToStrHex:
         mov ecx, 7                    ; counter, 8 loops (7>=0) - 8 chars
 .next:
         mov al, bl                    ; load first 8 bits
-        and al, 0Fh                   ; select only lower 4 bits (higher half of AL is zeroed)
+        and al, 0Fh                   ; select lower nybble
         add ax, 48                    ; add ASCII table offset to make number char code (0-9 -> 48-57)
-        cmp ax, 58                    ; check for overflow
-        jl .store                     ; store char if less than 58
+        cmp ax, 58                    ; check if char is in [48, 57] interval
+        jl .store                     ; -//-
         add ax, 7                     ; add another offset for A-F digits (10-15 -> 65-70)
 .store:
         mov [edi + ecx], al           ; write converted number (flow from right to left)
@@ -196,7 +196,7 @@ DwordToStrHex:
         ; line (carriage return + line feed)
         ;
         ; Registers:
-        ; This procedure changes state of EAX, EBX, EDX, EDI
+        ; EAX, EBX, EDX, EDI
         ;---------------------------------------------------------------
 
 CpuIdToStr:
