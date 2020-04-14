@@ -10,16 +10,18 @@ ASM = nasm
 ASMFLAGS = -fwin32
 LINKER = i686-w64-mingw32-gcc
 LFLAGS = -luser32 -lkernel32
-RM = rm -f
+RM = rm -rf
 
 $(BINDIR)/$(TARGET): $(OBJ)
+		@mkdir -p $(BINDIR)
 		@$(LINKER) $(OBJ) $(LFLAGS) -o $@ 
 		@echo "Linking complete."
 $(OBJ): $(OBJDIR)/%.obj : $(SRCDIR)/%.asm
+		@mkdir -p $(OBJDIR)
 		@$(ASM) $(ASMFLAGS) -o $@ $^
 		@echo "Compiled "$<" successfully."
 
 .PHONY: clean
 clean:
-		@$(RM) $(OBJ) $(BINDIR)/$(TARGET)
+		@$(RM) $(OBJDIR) $(BINDIR)
 		@echo "Cleanup complete."
