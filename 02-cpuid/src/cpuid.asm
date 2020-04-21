@@ -99,64 +99,68 @@ _main:
         call _ExitProcess@4           ; -//-
 
 
-        ;---------------------------------------------------------------
-        ; GenPlcHldStr: generate placeholder for CPUID results
-        ;---------------------------------------------------------------
-        ; Input:
-        ; 1. (dword) - address where results will be stored
-        ;
-        ; Output:
-        ; Placeholder string in "REG=xxxxxxxx" format with new line
-        ; (carriage return + line feed) after each item
-        ;
-        ; Registers:
-        ; EAX, ECX, EDI
-        ;---------------------------------------------------------------
+;---------------------------------------------------------------
+; GenPlcHldStr -- Generate placeholder for CPUID results.
+;
+;   (IO follows syscall convention)
+;   Input:
+;     (1): address where results will be stored
+;
+;   Output:
+;     Placeholder string in "REG=xxxxxxxx" format with new line
+;     (carriage return + line feed) after each item.
+;     Returns nothing.
+;
+;   Registers:
+;     EAX, ECX, EDX
+;---------------------------------------------------------------
 
 GenPlcHldStr:
         push ebp
         mov ebp, esp
-        mov edi, [ebp + 8]            ; take argument (address)
+        mov edx, [ebp + 8]            ; take argument (address)
         mov dword eax, "EAX="         ; register name (item)
         mov ecx, 3                    ; items counter, 4 loops (3>=0) - 4 registers
 .items:
-        mov [edi], eax                ; place item
-        add edi, 4                    ; advance pointer
+        mov [edx], eax                ; place item
+        add edx, 4                    ; advance pointer
         push ecx                      ; save items counter
         mov ecx, 7                    ; digits counter, 8 loops (7>=0) - 8 chars
 .digits:
         mov byte [edi], "x"           ; place 'x' for future digit
-        add edi, 1                    ; advance pointer
+        add edx, 1                    ; advance pointer
         dec ecx                       ; decrement digits counter
         cmp ecx, 0                    ; check whether loop is finished
         jge .digits                   ; jump, if not
 
-        mov word [edi], 0x0d0a        ; carriage return + line feed
+        mov word [edx], 0x0d0a        ; carriage return + line feed
         add edi, 2                    ; advance pointer
         add eax, 0x00000100           ; change middle letter
         pop ecx                       ; retrieve items counter
         dec ecx                       ; decrement items counter
         cmp ecx, 0                    ; check whether loop is finished
         jge .items                    ; jump, if isn't
-        mov byte [edi], 0             ; null-termination
+        mov byte [edx], 0             ; null-termination
 
         pop ebp                       ; restore base pointer from stack back
         ret 4                         ; return from procedure freeing 4 bytes (arguments length) from stack
 
 
-        ;---------------------------------------------------------------
-        ; DwordToStrHex: converts 8 nybbles to 8 hexadecimal characters
-        ;---------------------------------------------------------------
-        ; Input:
-        ; 1. (dword) - 32-bit number to be converted
-        ; 2. (dword) - address where results will be stored
-        ;
-        ; Output:
-        ; Four ASCII characters string, representing hexadecimal number
-        ;
-        ; Registers:
-        ; EAX, EBX, EDX, EDI
-        ;---------------------------------------------------------------
+;---------------------------------------------------------------
+; DwordToStrHex -- Converts 8 nybbles to 8 hexadecimal 
+;                  characters.
+;
+;   Input:
+;     (1): 32-bit number to be converted
+;     (2): address where results will be stored
+;
+;   Output:
+;     Four ASCII characters string, representing hexadecimal 
+;     number.
+;
+;   Registers:
+;     EAX, EBX, EDX, EDI
+;---------------------------------------------------------------
 
 DwordToStrHex:
         push ebp                      ; push in the stack address in base pointer
@@ -183,21 +187,21 @@ DwordToStrHex:
         ret 8                         ; return from procedure freeing 8 bytes (arguments length) from stack
 
 
-        ;---------------------------------------------------------------
-        ; CpuIdToStr: invokes CPUID and returns string with EAX-EDX
-        ; contents
-        ;---------------------------------------------------------------
-        ; Input:
-        ; 1. (dword) - CPUID code
-        ; 2. (dword) - address, where results will be stored
-        ;
-        ; Output:
-        ; String in "REG=xxxxxxxx" format with each register on new
-        ; line (carriage return + line feed)
-        ;
-        ; Registers:
-        ; EAX, EBX, EDX, EDI
-        ;---------------------------------------------------------------
+;---------------------------------------------------------------
+; CpuIdToStr -- Invokes CPUID and returns string with EAX-EDX
+;               contents.
+;
+;   Input:
+;     (1): CPUID code
+;     (2): address, where results will be stored
+;
+;   Output:
+;     String in "REG=xxxxxxxx" format with each register on new
+;     line (carriage return + line feed).
+;
+;   Registers:
+;     EAX, EBX, EDX, EDI
+;---------------------------------------------------------------
 
 CpuIdToStr:
         push ebp                      ; push in the stack address in base pointer
